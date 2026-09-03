@@ -1,0 +1,4 @@
+import { NextRequest } from 'next/server';
+import { backendError, backendFetch, selectedServerProtocol } from '@/lib/backend';
+import { mockHealth } from '@/lib/mock-data';
+export async function GET(request: NextRequest) { if (process.env.RAG_DEV_MOCKS === 'true') return Response.json({ ...mockHealth, checkedAt: new Date().toISOString() }); try { const healthPath = selectedServerProtocol(request) === 'ollama' ? '/v1/models' : '/health'; const upstream = await backendFetch(request, healthPath); return upstream.ok ? Response.json({ ok: true, status: 'online', checkedAt: new Date().toISOString() }) : backendError(upstream); } catch (error) { if (error instanceof Response) return error; return Response.json({ ok: false, status: 'unavailable', checkedAt: new Date().toISOString() }, { status: 503 }); } }
